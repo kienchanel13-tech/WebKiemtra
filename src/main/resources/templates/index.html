@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Đặt Vé Xe Khách</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .seat {
+            width: 80px;
+            height: 60px;
+            margin: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-light pb-5">
+
+<div class="container mt-5">
+    <h1 class="text-center text-primary mb-4">🚌 ĐẶT VÉ XE KHÁCH ONLINE</h1>
+
+    <!-- BƯỚC 1: TÌM CHUYẾN -->
+    <div class="card mb-4 shadow-sm border-primary">
+        <div class="card-header bg-primary text-white fw-bold">Bước 1: Tìm Chuyến Xe & Chỗ Trống</div>
+        <div class="card-body">
+            <div class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label for="tripId" class="col-form-label">Mã Chuyến Xe (Trip ID):</label>
+                </div>
+                <div class="col-auto">
+                    <input type="number" id="tripId" class="form-control" value="1">
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-primary" onclick="loadSeats()">Tìm Ghế Trống</button>
+                </div>
+            </div>
+            
+            <div class="mt-4" id="seatContainer" style="display: none;">
+                <h5>Danh sách ghế trống (Vui lòng chọn 1 ghế):</h5>
+                <hr>
+                <div id="seatsList" class="d-flex flex-wrap">
+                    <!-- Ghế render ở đây qua JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BƯỚC 2: GIỮ GHẾ -->
+    <div class="card mb-4 shadow-sm border-warning" id="holdSeatCard" style="display: none;">
+        <div class="card-header bg-warning text-dark fw-bold">Bước 2: Điền thông tin hành khách (Giữ ghế)</div>
+        <div class="card-body">
+            <form id="holdForm">
+                <div class="mb-3">
+                    <label class="form-label fs-5">Ghế đang chọn: <span id="selectedSeatIdLabel" class="badge bg-danger fs-5"></span></label>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Tên hành khách *</label>
+                        <input type="text" class="form-control" id="passengerName" placeholder="Ví dụ: Nguyễn Văn A" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Số điện thoại *</label>
+                        <input type="text" class="form-control" id="passengerPhone" placeholder="Ví dụ: 0912345678" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Mã Khách Hàng (Customer ID)</label>
+                        <input type="number" class="form-control" id="customerId" value="1" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Mã Loại Vé (Ticket Type ID)</label>
+                        <input type="number" class="form-control" id="ticketTypeId" value="1" required>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-warning w-100 fw-bold fs-5" onclick="holdSeat()">GIỮ CHỖ NGAY</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- BƯỚC 3: XÁC NHẬN THANH TOÁN -->
+    <div class="card mb-4 shadow-sm border-success" id="confirmCard" style="display: none;">
+        <div class="card-header bg-success text-white fw-bold">Bước 3: Thanh Toán & Xuất Vé</div>
+        <div class="card-body">
+            <div class="alert alert-success fs-5">
+                ✅ Đã giữ chỗ thành công! <strong>Mã Đặt Vé (Reservation ID): <span id="currentReservationId" class="badge bg-success"></span></strong>
+                <br><small>Vui lòng thanh toán trong vòng 15 phút.</small>
+            </div>
+            <form id="confirmForm">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Loại Vé</label>
+                        <select class="form-select" id="bookingType">
+                            <option value="ONE_WAY">Một Chiều (ONE_WAY)</option>
+                            <option value="ROUND_TRIP">Khứ Hồi (ROUND_TRIP)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Phương Thức Thanh Toán</label>
+                        <select class="form-select" id="paymentMethod" onchange="toggleTransactionCode()">
+                            <option value="CASH">Tiền Mặt (CASH)</option>
+                            <option value="BANK_TRANSFER">Chuyển Khoản (BANK_TRANSFER)</option>
+                            <option value="EWALLET">Ví Điện Tử (EWALLET)</option>
+                            <option value="CARD">Thẻ Tín Dụng (CARD)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Mã Giao Dịch (Nếu chuyển khoản/ví)</label>
+                        <input type="text" class="form-control" id="transactionCode" disabled placeholder="Nhập mã GD...">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-success w-100 fw-bold fs-5" onclick="confirmReservation()">XÁC NHẬN ĐÃ THANH TOÁN</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedSeatId = null;
+    let reservationId = null;
+
+    function toggleTransactionCode() {
+        const method = document.getElementById('paymentMethod').value;
+        document.getElementById('transactionCode').disabled = (method === 'CASH');
+    }
+
+    async function loadSeats() {
+        const tripId = document.getElementById('tripId').value;
+        if (!tripId) return alert('Vui lòng nhập mã chuyến xe!');
+
+        try {
+            const res = await fetch(`/reservations/seats/${tripId}`);
+            
+            // Xử lý lỗi trả về JSON từ GlobalExceptionHandler
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.message || 'Lỗi server');
+            }
+            
+            const data = await res.json();
+            const seatsList = document.getElementById('seatsList');
+            seatsList.innerHTML = '';
+            
+            if (!data || data.length === 0) {
+                seatsList.innerHTML = '<p class="text-danger">Không còn ghế trống hoặc chuyến xe không tồn tại.</p>';
+            } else {
+                data.forEach(seat => {
+                    // Cố gắng dò tìm ID và Tên ghế từ Database Map
+                    const seatId = seat.Id || seat.SeatId || seat.ID || seat.seatId || seat.SeatID;
+                    const seatName = seat.SeatName || seat.Name || seat.seatName || seat.Code || `Ghế ${seatId}`;
+                    
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-outline-primary seat shadow-sm';
+                    btn.innerText = seatName;
+                    btn.onclick = () => selectSeat(seatId, seatName, btn);
+                    seatsList.appendChild(btn);
+                });
+            }
+            
+            document.getElementById('seatContainer').style.display = 'block';
+            document.getElementById('holdSeatCard').style.display = 'none';
+            document.getElementById('confirmCard').style.display = 'none';
+        } catch (e) {
+            alert('Lỗi lấy danh sách ghế: ' + e.message);
+        }
+    }
+
+    function selectSeat(id, name, btnElement) {
+        selectedSeatId = id;
+        // Reset màu các nút
+        document.querySelectorAll('.seat').forEach(b => b.classList.remove('btn-primary', 'text-white'));
+        // Đổi màu nút được chọn
+        btnElement.classList.add('btn-primary', 'text-white');
+        
+        document.getElementById('selectedSeatIdLabel').innerText = `${name} (ID: ${id})`;
+        document.getElementById('holdSeatCard').style.display = 'block';
+        document.getElementById('confirmCard').style.display = 'none';
+    }
+
+    async function holdSeat() {
+        if (!selectedSeatId) return alert('Vui lòng chọn ghế!');
+        
+        const payload = {
+            tripId: document.getElementById('tripId').value,
+            seatId: selectedSeatId,
+            customerId: document.getElementById('customerId').value,
+            ticketTypeId: document.getElementById('ticketTypeId').value,
+            passengerName: document.getElementById('passengerName').value,
+            passengerPhone: document.getElementById('passengerPhone').value,
+            holdMinutes: 15
+        };
+
+        try {
+            const res = await fetch('/reservations/hold-seat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await res.json();
+            
+            if (!res.ok) {
+                let msg = data.message || "Có lỗi xảy ra khi giữ chỗ";
+                // Lấy chi tiết lỗi Validation nếu có
+                if(data.errors) {
+                    for(let key in data.errors) {
+                        msg += `\n- ${data.errors[key]}`;
+                    }
+                }
+                throw new Error(msg);
+            }
+
+            // Dò tìm ID Reservation trả về từ Map DB
+            reservationId = data.ReservationId || data.reservationId || data.Id || data.id;
+            
+            if (!reservationId) {
+                alert('Giữ chỗ thành công nhưng Stored Procedure không trả về ReservationID! Vui lòng check logic DB.');
+                console.log("DB Return:", data);
+                reservationId = 1; // Fallback thử nghiệm
+            }
+
+            document.getElementById('currentReservationId').innerText = reservationId;
+            document.getElementById('holdSeatCard').style.display = 'none';
+            document.getElementById('confirmCard').style.display = 'block';
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+        } catch (e) {
+            alert('Lỗi giữ ghế:\n' + e.message);
+        }
+    }
+
+    async function confirmReservation() {
+        if (!reservationId) return alert('Chưa có mã giữ chỗ!');
+        
+        const payload = {
+            reservationId: reservationId,
+            bookingType: document.getElementById('bookingType').value,
+            paymentMethod: document.getElementById('paymentMethod').value,
+            transactionCode: document.getElementById('transactionCode').value
+        };
+
+        try {
+            const res = await fetch('/reservations/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.message || "Lỗi xác nhận");
+            }
+            
+            const data = await res.json();
+            alert('🎉 THANH TOÁN VÀ XUẤT VÉ THÀNH CÔNG!\n' + JSON.stringify(data));
+            
+            // Reload lại trang để đặt vé mới
+            location.reload();
+        } catch (e) {
+            alert('Lỗi xác nhận thanh toán: ' + e.message);
+        }
+    }
+</script>
+</body>
+</html>
